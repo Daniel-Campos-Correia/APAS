@@ -1,0 +1,1 @@
+É necessário adicionar a pasta do gnuplot nesse diretório.

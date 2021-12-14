@@ -1,0 +1,155 @@
+*** Fund. de Projeto Analógico
+
+
+*** Opcoes
+** salvar as correntes para poder mostrar depois
+.options savecurrents
+.options filetype=ascii
+.temp {$Temp$}
+
+
+** transistores
+Mn vdd1 vg1 gnd gnd nmos l={2*lambda} w={20*lambda} ad={6*lambda*w} as={6*lambda*w} pd={12*lambda+2*w} ps={12*lambda+2*w}
+Mp vdd2 vg2 gnd gnd pmos l={2*lambda} w={20*lambda} ad={6*lambda*w} as={6*lambda*w} pd={12*lambda+2*w} ps={12*lambda+2*w}
+
+*** Parametros e Inclusoes
+.include {$Models$}
+.param lambda = {$lambda$}
+.param w=20*lambda
+.param vd= {$vd$}
+.param vg= {$vg$}
+.csparam vddsim={vd}
+
+vdd vdd gnd dc vd
+vgg vgg gnd dc vg
+
+bdd1 vdd1 gnd v = v(vdd)
+bdd2 vdd2 gnd v = '-v(vdd)'
+
+bgg2 gnd vg2 v = v(vgg)
+bgg1 vg1 gnd v = v(vgg)
+
+*.dc vgg 0.7 1.5 0.01
+*.dc vdd 0 5 10m
+*.pz vg1 gnd vdd1 gnd pz
+*.pz vg2 gnd vdd2 gnd pz
+*.ac dec 100 1 1k
+
+.end
+
+.control
+** Ajuste de opcoes
+	set color0=white
+	set color1=black
+	set units = degrees
+	set wr_singlescale
+	set wr_vecnames
+	set width = 4098
+	set filetype = ascii
+	*set appendwrite
+
+	** Parametros a serem salvos
+	save all @mn[id] @mn[ibs] @mn[gm] @mn[gds] @mn[gmbs] @mn[vdsat] @mn[vth]
+				+@mn[cgs] @mn[cgd] @mn[cgb] @mn[cbd] @mn[cbs] 
+        			+@mn[cdd] @mn[cgg] @mn[css] @mn[cbb] @mn[capbd] @mn[capbs]
+				+@mn[vgs] @mn[vds] @mn[vbs]
+				+@mp[id] @mp[ibs] @mp[gm] @mp[gds] @mp[gmbs] @mp[vdsat] @mp[vth]
+				+@mp[cgs] @mp[cgd] @mp[cgb] @mp[cbd] @mp[cbs] 
+        			+@mp[cdd] @mp[cgg] @mp[css] @mp[cbb] @mp[capbd] @mp[capbs]
+				+@mp[vgs] @mp[vds] @mp[vbs]
+
+	*** Roda as simulacoes, calcula os parametros e salva em arquivo
+	
+	* Cria as variaveis para fazer as simulacoes
+	let comp =  {$inicialcomp$}
+	let delta = {$delta$}
+
+	* Loop para variar o comprimento de canal e 
+	while comp < {$maxcomp$}
+	echo "Realizando simulação variando tensão na porta (Vgg) para L="$&comp"."
+	  * Modifica o comprimento dos transistores para o valor ajustado
+		alter @mn[l] = comp 
+	  alter @mp[l] = comp
+	  * Realiza a simulacao CC variando a tensao de porta
+		dc vgg 0 1.3 0.25m
+	  * Grava o comprimento para compor o nome do arquivo de saida
+	  let comp_ext = comp/1e-9
+	  * Incrementa o comprimento para a proxima simulacao
+	 	let comp = comp + delta
+	
+	  * Tratamento de dados para os NMOS. A maioria eh soh exemplo.
+	  * Nao serao necessariamente usados.
+	  let mn.id	= @mn[id]
+	  let mn.ibs	= @mn[ibs]
+	  let mn.gm	= @mn[gm]
+	  let mn.gds	= @mn[gds]
+	  let mn.gmbs	= @mn[gmbs]
+	  let mn.vsat	= @mn[vdsat]
+	  let mn.vth    = @mn[vth]
+	  let mn.cgs	= @mn[cgs]
+	  let mn.cgd	= @mn[cgd]
+	  let mn.cgb	= @mn[cgb]
+	  let mn.cbd	= @mn[cbd]
+	  let mn.cbs	= @mn[cbs]
+	  let mn.cdd    = @mn[cdd] 
+	  let mn.cgg    = @mn[cgg] 
+	  let mn.css    = @mn[css] 
+	  let mn.cbb    = @mn[cbb] 
+	  let mn.capbd  = @mn[capbd] 
+	  let mn.capbs  = @mn[capbs]
+	  let mn.vgs	= @mn[vgs]
+	  let mn.vds	= @mn[vds]
+	  let mn.vbs	= @mn[vbs]
+	  let eff_n     = 'mn.gm/mn.id'
+	  let ov_n      = 'mn.vgs - mn.vth'
+	  let pi_2      = '2*3.14159'
+	  let ft_n      = '(1/pi_2)*(mn.gm/mn.cgg)'
+	  let av_n      = 'mn.gm/mn.gds'
+	  let id_w_n    = 'mn.id/@mn[w]'
+	  let ro_n      = '1/mn.gds'
+	  let eff_ft_n  = 'eff_n*ft_n'
+
+	  * Tratamento de dados para os PMOS
+	  let mp.id	= @mp[id]
+	  let mp.ibs	= @mp[ibs]
+	  let mp.gm	= @mp[gm]
+	  let mp.gds	= @mp[gds]
+	  let mp.gmbs	= @mp[gmbs]
+	  let mp.vsat	= @mp[vdsat]
+	  let mp.vth    = @mp[vth]
+	  let mp.cgs	= @mp[cgs]
+	  let mp.cgd	= @mp[cgd]
+	  let mp.cgb	= @mp[cgb]
+	  let mp.cbd	= @mp[cbd]
+	  let mp.cbs	= @mp[cbs]
+	  let mp.cdd    = @mp[cdd] 
+	  let mp.cgg    = @mp[cgg] 
+	  let mp.css    = @mp[css] 
+	  let mp.cbb    = @mp[cbb] 
+	  let mp.capbd  = @mp[capbd] 
+	  let mp.capbs  = @mp[capbs]
+	  let mp.vgs	= @mp[vgs]
+	  let mp.vds	= @mp[vds]
+	  let mp.vbs	= @mp[vbs]
+	  let eff_p     = 'mp.gm/mp.id'
+	  let ov_p      = 'mp.vgs - mp.vth'
+	  let ft_p      = '(1/pi_2)*(mp.gm/mp.cgg)'
+	  let av_p      = 'mp.gm/mp.gds'
+	  let id_w_p    = 'mp.id/@mp[w]'
+	  let ro_p      = '1/mp.gds'
+	  let eff_ft_p  = 'eff_p*ft_p'
+
+	  * Compoe o nome do arquivo para escrita. Extensao eh livre.
+	  set arquivo1	=	{'data/{$folderName$}/{$archiveName$}'}{$&comp_ext}{'n_vdd_'}{$&vddsim}{'.dat'}
+	  * Escreve os dados selecionados no arquivo
+	  wrdata $arquivo1	mn.id mn.gm mn.gds mn.gmbs mn.vsat mn.vth
+	                +mn.cgd mn.cgg mn.vgs mn.vds mn.vbs
+	                +eff_n ov_n ft_n av_n id_w_n ro_n eff_ft_n
+	
+	  * Mesma coisa para os PMOS
+	  set arquivo2	=	{'data/{$folderName$}/{$archiveName$}'}{$&comp_ext}{'n_vdd_'}{$&vddsim}{'.dat'}
+	  wrdata $arquivo2	mp.id mp.gm mp.gds mp.gmbs mp.vsat mp.vth
+	                +mp.cgd mp.cgg mp.vgs mp.vds mp.vbs
+	                +eff_p ov_p ft_p av_p id_w_p ro_p eff_ft_p
+	end
+.endc
